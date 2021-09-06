@@ -1,4 +1,7 @@
+const { body, validationResult } = require('express-validator');
+
 let restaurants =[
+
 	{
 		"id": 1,
 		"name": "Les trois Mousquetaires",
@@ -31,14 +34,71 @@ let restaurants =[
 	}
 ]
 
-const getAllRestaurants = (_req, res) => {
+const checkRestaurant = () => [
+
+	body("name").notEmpty(),
+	body("address").notEmpty(),
+	body("city").notEmpty(),
+	body("country").notEmpty(),
+	body("stars").notEmpty().toInt(),
+	body("cuisine").notEmpty(),
+	body("priceCategory").notEmpty().toInt()
+];
+
+const validateRestaurant = (req, res, next) => {
+	const errors = validationResult(req)
+
+	if (!errors.isEmpty()) {
+
+		return res.status(422).json({
+			errors: errors.array(),
+		})
+	}
+	
+	next()
+
+}
+
+const getAllRestaurants = (req, res) => {
     
-    res.json(
-        {
-            status: "OK",
-            restaurants: restaurants
-        }
-    );
+    if (Object.entries(req.query).length === 0) {
+
+		return res.json(
+			{
+				status: "OK",
+				restaurants: restaurants
+			}
+		);
+	}
+
+	if (!req.query.city || !req.query.cuisine) {
+
+		return res.status(400).json({
+			status: "Bad query"
+		})
+
+	} else {
+
+		const city = req.query.city.toLowerCase()
+		const cuisine = req.query.cuisine.toLowerCase()
+
+		const result = restaurants.filter(restaurant =>
+
+			city === restaurant.city.toLowerCase() && cuisine === restaurant.cuisine
+		)
+
+		if (result.length === 0) {
+
+			return res.status(400).json({
+				status: "Not found"
+			})
+		}
+
+		res.json({
+			status: "OK",
+			restaurants: result
+		})
+	}
 };
 
 const getRestaurantbyID = (req, res) => {
@@ -54,6 +114,16 @@ const getRestaurantbyID = (req, res) => {
 };
 
 const createRestaurant = (req, res) => {
+
+	const errors = validationResult(req)
+
+	if (!errors.isEmpty()) {
+
+		return res.status(400).json({
+			status: "Error",
+			errors: errors.array()
+		})
+	}
 
     const body = req.body
 
@@ -87,11 +157,9 @@ const updateRestaurant = (req, res) => {
 		}
 	});
 
-	let update =restaurants.map(restaurant => 
+	let restaurants =restaurants.map(restaurant => 
 		result[0].id === restaurant.id ? result[0] : restaurant
 	);
-
-	restaurants =update
 	
 	res.json({
 		status: "OK",
@@ -125,6 +193,8 @@ const deleteRestaurant = (req, res) => {
 }
 
 module.exports ={
+	checkRestaurant: checkRestaurant,
+	validateRestaurant: validateRestaurant,
 	getAllRestaurants : getAllRestaurants,
 	getRestaurantbyID : getRestaurantbyID,
 	createRestaurant : createRestaurant,

@@ -1,3 +1,5 @@
+const { body, validationResult } = require('express-validator');
+
 let hostels =[
 
 	{
@@ -35,14 +37,70 @@ let hostels =[
 	}
 ];
 
-const getAllHostels = (_req, res) => {
-    
-    res.json(
-        {
-            status: "OK",
-            hostels: hostels
-        }
-    );
+const checkHostel = () => [
+
+	body("name").notEmpty(),
+	body("address").notEmpty(),
+	body("city").notEmpty(),
+	body("country").notEmpty(),
+	body("stars").notEmpty().toInt(),
+	body("hasSpa").notEmpty().toBoolean(),
+	body("hasPool").notEmpty().toBoolean(),
+	body("priceCategory").notEmpty().toInt()
+];
+
+const validateHostel = (req, res, next) => {
+	const errors = validationResult(req)
+
+	if (!errors.isEmpty()) {
+
+		return res.status(422).json({
+			errors: errors.array(),
+		})
+	}
+	
+	next()
+}
+  
+const getAllHostels = (req, res) => {
+
+	if (Object.entries(req.query).length === 0) {
+
+		return res.json(
+			{
+				status: "OK",
+				hostels: hostels
+			}
+		);
+	}
+
+	if (!req.query.city || !req.query.stars) {
+
+		return res.status(400).json({
+			status: "Bad query"
+		})
+	} else {
+
+		const city = req.query.city.toLowerCase()
+		const stars = parseInt(req.query.stars)
+
+		const result = hostels.filter(hostel =>
+
+			city === hostel.city.toLowerCase() && stars === hostel.stars
+		)
+
+		if (result.length === 0) {
+
+			return res.status(400).json({
+				status: "Not found"
+			})
+		}
+
+		res.json({
+			status: "OK",
+			hostels: result
+		})
+	}
 };
 
 const getHostelbyID = (req, res) => {
@@ -59,7 +117,18 @@ const getHostelbyID = (req, res) => {
 
 const createHostel = (req, res) => {
 
+	console.log("coucou")
+	const errors = validationResult(req)
+	if (!errors.isEmpty()) {
+
+		return res.status(400).json({
+			status: "Error",
+			errors: errors.array()
+		})
+	}
+
     const body = req.body
+	
 	const hostel ={
 		"id": hostels.length + 1,
 		"name": body.name,
@@ -83,6 +152,14 @@ const createHostel = (req, res) => {
 const updateHostel = (req, res) => {
 
 	const result = hostels.filter(hostel => parseInt(req.params.id) === hostel.id)
+	
+	if (result.length === 0) {
+
+		return res.json({
+			status: "Not found",
+			id: req.params.id
+		})
+	}
 
 	Object.entries(req.query).forEach( ([k, v]) => {
 		
@@ -91,11 +168,9 @@ const updateHostel = (req, res) => {
 		}
 	});
 
-	let update =hostels.map(hostel => 
+	hostels =hostels.map(hostel => 
 		result[0].id === hostel.id ? result[0] : hostel
 	);
-
-	hostels =update
 	
 	res.json({
 		status: "OK",
@@ -115,23 +190,24 @@ const deleteHostel = (req, res) => {
             status: "Not found"
         })
 
-    } else {
-
-        hostels = hostels.filter(hostel =>
-            hostelToDelete[0] !== hostel
-        );
-
-        return res.json({
-            status: "OK",
-            hostels: hostels
-        });
     }
+
+	hostels = hostels.filter(hostel =>
+		hostelToDelete[0] !== hostel
+	);
+
+	res.json({
+		status: "OK",
+		hostels: hostels
+	});
 }
 
 module.exports ={
-	getAllHostels : getAllHostels,
-	getHostelbyID : getHostelbyID,
-	createHostel : createHostel,
+	checkHostel: checkHostel,
+	validateHostel: validateHostel,
+	getAllHostels: getAllHostels,
+	getHostelbyID: getHostelbyID,
+	createHostel: createHostel,
 	updateHostel: updateHostel,
 	deleteHostel: deleteHostel
 };

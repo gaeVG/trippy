@@ -1,8 +1,8 @@
 const express = require("express")
 const router = express.Router()
-const { body } = require('express-validator');
 
 const restaurantsController = require("../controllers/restaurantController")
+
 
 router.use(express.json())
 

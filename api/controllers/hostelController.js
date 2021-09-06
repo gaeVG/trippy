@@ -105,17 +105,27 @@ const updateHostel = (req, res) => {
 
 const deleteHostel = (req, res) => {
 
-	let index
+	let hostelToDelete = hostels.filter(hostel => {
+        return parseInt(req.params.id) === hostel.id
+    })
 
-	hostels.map(hostel => {
+    if (hostelToDelete.length === 0) {
 
-		if (parseInt(req.params.id) !== hostel.id) {
-			console.log(hostel)
-			return hostel
-		}
-	})
+        return res.json({
+            status: "Not found"
+        })
 
-	console.log(hostels)
+    } else {
+
+        hostels = hostels.filter(hostel =>
+            hostelToDelete[0] !== hostel
+        );
+
+        return res.json({
+            status: "OK",
+            hostels: hostels
+        });
+    }
 }
 
 module.exports ={

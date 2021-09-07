@@ -1,41 +1,46 @@
 const { body, validationResult } = require('express-validator');
+const db = require("mongoose");
 
-let hostels =[
 
+const HostelSchema = new db.Schema(
 	{
-		"id": 1,
-		"name": "Imperial Hotel",
-		"address": "84 av des Champs-Élysées",
-		"city": "Paris",
-		"country": "France",
-		"stars": 5,
-		"hasSpa": true,
-		"hasPool": true,
-		"priceCategory": 3
-	},
-	{
-		"id": 2,
-		"name": "The Queen",
-		"address": "3 Darwin Street",
-		"city": "London",
-		"country": "England",
-		"stars": 4,
-		"hasSpa": true,
-		"hasPool": false,
-		"priceCategory": 3
-	},
-	{
-		"id": 3,
-		"name": "Kiwi land",
-		"address": "4587 George St.",
-		"city": "Auckland",
-		"country": "New-Zealand",
-		"stars": 3,
-		"hasSpa": false,
-		"hasPool": true,
-		"priceCategory": 2
+		name: {
+			type: String,
+			required: true
+		},
+		address: {
+			type: String,
+			required: true
+		},
+		city: {
+			type: String,
+			required: true
+		},
+		country: {
+			type: String,
+			required: true
+		},
+		stars: {
+			type: Number,
+			required: true
+		},
+		hasSpa: {
+			type: Boolean,
+			required: true
+		},
+		hasPool: {
+			type: Boolean,
+			required: true
+		},
+		priceCategory: {
+			type: Number,
+			required: true
+		},
 	}
-];
+);
+
+const dbHostel = db.model("Hotel", HostelSchema);
+
 
 const checkHostel = () => [
 
@@ -60,146 +65,114 @@ const validateHostel = (req, res, next) => {
 	}
 	
 	next()
-}
+};
   
-const getAllHostels = (req, res) => {
+const getAllHostels = async (req, res) => {
 
 	if (Object.entries(req.query).length === 0) {
 
-		return res.json(
+		return res.status(200).json(
 			{
-				status: "OK",
-				hostels: hostels
+				hostels: await dbHostel.find()
 			}
-		);
+		)
 	}
 
 	if (!req.query.city || !req.query.stars) {
 
-		return res.status(400).json({
-			status: "Bad query"
-		})
+		return res.status(400)
+
 	} else {
 
-		const city = req.query.city.toLowerCase()
-		const stars = parseInt(req.query.stars)
+		const city = req.query.city;
+		const stars = req.query.stars;
 
-		const result = hostels.filter(hostel =>
-
-			city === hostel.city.toLowerCase() && stars === hostel.stars
-		)
+		const result = await dbHostel.find(
+			{
+				"city": { $regex: new RegExp("^" + city.toLowerCase(), "i") },
+				"stars": stars
+			}
+		);
 
 		if (result.length === 0) {
 
-			return res.status(400).json({
-				status: "Not found"
-			})
+			return res.status(404)
 		}
 
-		res.json({
-			status: "OK",
+		res.status(200).json({
+
 			hostels: result
 		})
 	}
 };
 
-const getHostelbyID = (req, res) => {
-    
-	const result = hostels.filter(hostel => parseInt(req.params.id) === hostel.id)
+const getHostelbyID = async (req, res) => {
 
-    result.length > 0 ? res.json({
-        status: "OK",
-        hostels: result
-    }) : res.json({
-        status: "None",
-    });
+	const result = await dbHostel.findById(req.params.id);
+
+	result.length === 0
+	?
+		res.status(404)
+	:
+		res.status(302).json(
+			{
+				hostel: result
+			}
+		);
 };
 
-const createHostel = (req, res) => {
+const createHostel = async (req, res) => {
 
-	console.log("coucou")
-	const errors = validationResult(req)
+	const errors = validationResult(req);
+
 	if (!errors.isEmpty()) {
 
-		return res.status(400).json({
-			status: "Error",
-			errors: errors.array()
-		})
+		return res.status(400).json(
+			{
+				errors: errors.array()
+			}
+		);
 	}
 
-    const body = req.body
-	
-	const hostel ={
-		"id": hostels.length + 1,
-		"name": body.name,
-		"address": body.address,
-		"city": body.city,
-		"country": body.country,
-		"stars": body.stars,
-		"hasSpa": body.hasSpa,
-		"hasPool": body.hasSpa,
-		"priceCategory": body.priceCategory,
-	}
+	await dbHostel.create(req.body);
 
-	hostels.push(hostel)
-
-	res.json({
-		status: "OK",
-		hostel: hostel
-	})
-};
-
-const updateHostel = (req, res) => {
-
-	const result = hostels.filter(hostel => parseInt(req.params.id) === hostel.id)
-	
-	if (result.length === 0) {
-
-		return res.json({
-			status: "Not found",
-			id: req.params.id
-		})
-	}
-
-	Object.entries(req.query).forEach( ([k, v]) => {
-		
-		if (result[0][k]) {
-			result[0][k] =v
+	res.status(200).json(
+		{
+			hostel: req.body
 		}
-	});
-
-	hostels =hostels.map(hostel => 
-		result[0].id === hostel.id ? result[0] : hostel
 	);
-	
-	res.json({
-		status: "OK",
-		hostel: result[0]
-	})
 };
 
-const deleteHostel = (req, res) => {
+const updateHostel = async (req, res) => {
 
-	let hostelToDelete = hostels.filter(hostel => {
-        return parseInt(req.params.id) === hostel.id
-    })
+	const result = await dbHostel.findByIdAndUpdate(req.params.id, req.body, { new: true });
 
-    if (hostelToDelete.length === 0) {
+	if (!result) {
 
-        return res.json({
-            status: "Not found"
-        })
+		return res.status(404);
+	}
 
-    }
-
-	hostels = hostels.filter(hostel =>
-		hostelToDelete[0] !== hostel
+	res.status(202).json(
+		{
+			hostel: result
+		}
 	);
+};
 
-	res.json({
-		status: "OK",
-		hostels: hostels
-	});
+const deleteHostel = async (req, res) => {
+
+	const result = await dbHostel.findOneAndDelete(req.params.id)
+
+	if (!result) {
+
+		return res.status(404);
+	}
+
+	res.status(200).json(
+		{
+			hostel: result
+		}
+	);
 }
 
 module.exports ={

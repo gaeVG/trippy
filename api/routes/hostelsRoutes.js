@@ -9,13 +9,13 @@ router.use(express.json())
 router.get("/", hostelsController.getAllHostels)
 
 router.post("/",
-    hostelsController.checkHostel(),
-    hostelsController.validateHostel,
-    hostelsController.createHostel
+	hostelsController.checkHostel(),
+	hostelsController.validateHostel,
+	hostelsController.createHostel
 );
 
 router.get("/:id", hostelsController.getHostelbyID);
-router.put("/:id", hostelsController.updateHostel);
+router.patch("/:id", hostelsController.updateHostel);
 router.delete("/:id", hostelsController.deleteHostel);
 
 module.exports = router;

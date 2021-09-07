@@ -44,13 +44,13 @@ const dbHostel = db.model("Hotel", HostelSchema);
 
 const checkHostel = () => [
 
-	body("name").notEmpty(),
-	body("address").notEmpty(),
-	body("city").notEmpty(),
-	body("country").notEmpty(),
-	body("stars").notEmpty().toInt(),
-	body("hasSpa").notEmpty().toBoolean(),
-	body("hasPool").notEmpty().toBoolean(),
+	body("name").notEmpty().isString().trim(),
+	body("address").notEmpty().isString().trim(),
+	body("city").notEmpty().isString().trim(),
+	body("country").notEmpty().isString().trim(),
+	body("stars").notEmpty().isInt(),
+	body("hasSpa").notEmpty().isBoolean(),
+	body("hasPool").notEmpty().isBoolean(),
 	body("priceCategory").notEmpty().toInt()
 ];
 

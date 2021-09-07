@@ -51,7 +51,7 @@ const checkHostel = () => [
 	body("stars").notEmpty().isInt(),
 	body("hasSpa").notEmpty().isBoolean(),
 	body("hasPool").notEmpty().isBoolean(),
-	body("priceCategory").notEmpty().toInt()
+	body("priceCategory").notEmpty().isInt()
 ];
 
 const validateHostel = (req, res, next) => {

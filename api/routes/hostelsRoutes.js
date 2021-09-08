@@ -15,7 +15,7 @@ router.post("/",
 );
 
 router.get("/:id", hostelsController.getHostelbyID);
-router.patch("/:id", hostelsController.updateHostel);
+router.put("/:id", hostelsController.updateHostel);
 router.delete("/:id", hostelsController.deleteHostel);
 
 module.exports = router;

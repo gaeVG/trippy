@@ -8,9 +8,9 @@ router.use(express.json())
 
 router.get("/", restaurantsController.getAllRestaurants)
 router.post("/",
-    restaurantsController.checkRestaurant(),
-    restaurantsController.validateRestaurant,
-    restaurantsController.createRestaurant
+	restaurantsController.checkRestaurant(),
+	restaurantsController.validateRestaurant,
+	restaurantsController.createRestaurant
 );
 router.get("/:id", restaurantsController.getRestaurantbyID);
 router.put("/:id", restaurantsController.updateRestaurant);
